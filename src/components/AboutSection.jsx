@@ -1,5 +1,6 @@
 import headshot from "./headshot.jpg";
 import friendshot from "./friendshot.jpg";
+import resumePdf from '@/assets/Resume.pdf';
 
 export const AboutSection = () => {
     return <section id="about" className="py-24 px-4 relative">
@@ -67,12 +68,13 @@ export const AboutSection = () => {
                         <a href="#contact" className="button">
                             Get In Touch
                         </a>
-                        <a 
-                        href="/Resume.pdf" 
-                        target="_blank" 
+                        <a
+                        href={resumePdf}
+                        target="_blank"
                         rel="noopener noreferrer"
-                        className="px-6 py-2 rounded-full border border-primary text-primary hover:bg-primary/10 transition-colors duration-300">
-                            Resume
+                        className="px-6 py-2 rounded-full border border-primary text-primary hover:bg-primary/10 transition-colors duration-300"
+                        >
+                             Resume
                         </a>
                     </div>
                 </div>
