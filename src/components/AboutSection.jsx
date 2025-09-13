@@ -11,8 +11,8 @@ export const AboutSection = () => {
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
                 <div className="flex flex-col items-center justify-center space-y-2">
-                    <img src={headshot} alt="Headshot" className="w-90 rounded-sm" />
-                    <img src={friendshot} alt="Friendshot" className="w-90 rounded-sm" />
+                    <img src={headshot} alt="Headshot" className="w-64 rounded-sm" />
+                    <img src={friendshot} alt="Friendshot" className="w-64 rounded-sm" />
                     </div>
                 <div className="space-y-4 text-center">
                     <p className="text-foreground">
@@ -36,7 +36,6 @@ export const AboutSection = () => {
                         src="https://open.spotify.com/embed/track/3ls9lmPJ7xROR2VL5Kv1Gz?utm_source=generator" 
                         width="100%" 
                         height="80" 
-                        allowfullscreen="" 
                         allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" 
                         loading="lazy"
                         allowFullScreen
