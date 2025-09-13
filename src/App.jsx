@@ -1,16 +1,17 @@
-import { HashRouter, Routes, Route } from "react-router-dom";
-import { Home } from "./pages/Home";
-import { NotFound } from "./pages/NotFound";
+import { Navbar } from "./components/Navbar";
+import { HomeSection } from "./components/HomeSection";
+import { AboutSection } from "./components/AboutSection";
+import { ContactSection } from "./components/ContactSection";
+import { Footer } from "./components/Footer";
 
 function App() {
   return (
     <>
-      <HashRouter>
-        <Routes>
-          <Route index element={<Home />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </HashRouter>
+      <Navbar />
+      <HomeSection />
+      <AboutSection />
+      <ContactSection />
+      <Footer />
     </>
   );
 }
