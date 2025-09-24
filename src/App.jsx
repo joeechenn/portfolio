@@ -6,6 +6,7 @@ import { ContactSection } from "./components/ContactSection";
 import { Footer } from "./components/Footer";
 
 function App() {
+  console.log('App mounted');
   return (
     <>
       <Navbar />

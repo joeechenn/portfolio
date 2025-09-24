@@ -1,8 +1,7 @@
 import headshot from "./headshot.jpg";
 import friendshot from "./friendshot.jpg";
-import resumePdf from '@/assets/Resume.pdf';
 
-const resumeUrl = new URL('Resume.pdf', import.meta.env.BASE_URL).toString();
+const resumeUrl = '/Resume.pdf';
 
 export const AboutSection = () => {
     return <section id="about" className="py-24 px-4 relative">
