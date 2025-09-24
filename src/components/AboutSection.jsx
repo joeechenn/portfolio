@@ -1,5 +1,6 @@
 import headshot from "./headshot.jpg";
 import friendshot from "./friendshot.jpg";
+import resumePdf from '@/assets/Resume.pdf';
 
 const resumeUrl = new URL('Resume.pdf', import.meta.env.BASE_URL).toString();
 
@@ -28,12 +29,11 @@ export const AboutSection = () => {
                         I love playing games and watching gameplay like <em>Detroit: Become Human</em>, <em>Sifu</em> and <em>Pokémon Black and Pokémon White</em>. 
                         I enjoy both listening and talking about music and clothes/fashion. Here are some songs I've been listening to:
                     </p>
-
                     <div className="space-y-4">
                         <iframe 
                         data-testid="embed-iframe" 
                         style={{ borderRadius: 12 }}
-                        src="https://open.spotify.com/embed/track/3ls9lmPJ7xROR2VL5Kv1Gz?utm_source=generator" 
+                        src="https://open.spotify.com/embed/track/2FPmvXIMpjgzJQbUeJo8Iv?utm_source=generator" 
                         width="100%" 
                         height="80" 
                         allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" 
@@ -45,7 +45,7 @@ export const AboutSection = () => {
                         <iframe 
                         data-testid="embed-iframe"
                          style={{ borderRadius: 12 }} 
-                         src="https://open.spotify.com/embed/track/3iumIu1ZrzJV3E1q2wBvbJ?utm_source=generator" 
+                         src="https://open.spotify.com/embed/track/1dVebYDzVt5I7O5lpWdaxM?utm_source=generator" 
                          width="100%" height="80" 
                          allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" 
                          loading="lazy"
@@ -55,7 +55,7 @@ export const AboutSection = () => {
 
                         <iframe data-testid="embed-iframe" 
                          style={{ borderRadius: 12 }} 
-                         src="https://open.spotify.com/embed/track/5IBgHRJfCoxwIlalQZsW08?utm_source=generator" 
+                         src="https://open.spotify.com/embed/track/6W2Ef5Ph6ILTUAedoQ3QIv?utm_source=generator" 
                          width="100%" 
                          height="80" 
                          allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" 
