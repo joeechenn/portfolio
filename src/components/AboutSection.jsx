@@ -1,8 +1,6 @@
 import headshot from "./headshot.jpg";
 import friendshot from "./friendshot.jpg";
 
-const resumeUrl = '/Joe_Chen_Resume.pdf';
-
 export const AboutSection = () => {
     return <section id="about" className="py-24 px-4 relative">
         <div className="container mx-auto max-w-5xl">
@@ -68,7 +66,7 @@ export const AboutSection = () => {
                             Get In Touch
                         </a>
                         <a
-                        href={resumeUrl}
+                        href="Joe_Chen_Resume.pdf"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="px-6 py-2 rounded-full border border-primary text-primary hover:bg-primary/10 transition-colors duration-300"
