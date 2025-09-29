@@ -1,7 +1,7 @@
 import headshot from "./headshot.jpg";
 import friendshot from "./friendshot.jpg";
 
-const resumeUrl = '/Resume.pdf';
+const resumeUrl = '/Joe_Chen_Resume.pdf';
 
 export const AboutSection = () => {
     return <section id="about" className="py-24 px-4 relative">
