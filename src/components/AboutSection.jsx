@@ -23,14 +23,14 @@ export const AboutSection = () => {
                         like the Androids in <em>Detroit: Become Human</em> (one of my favorite games)
                     </p>
                     <p className="text-foreground">
-                        I love playing games and watching gameplay like <em>Detroit: Become Human</em>, <em>Sifu</em> and <em>Pokémon Black and Pokémon White</em>. 
+                        I love playing games and watching gameplay like <em>Detroit: Become Human</em>, <em>Equilinox</em> and <em>Pokémon Black and Pokémon White</em>. 
                         I enjoy both listening and talking about music and clothes/fashion. Here are some songs I've been listening to:
                     </p>
                     <div className="space-y-4">
                         <iframe 
                         data-testid="embed-iframe" 
                         style={{ borderRadius: 12 }}
-                        src="https://open.spotify.com/embed/track/2FPmvXIMpjgzJQbUeJo8Iv?utm_source=generator" 
+                        src="https://open.spotify.com/embed/track/5k8LB57xOq8UUNVaKWSqrf?utm_source=generator" 
                         width="100%" 
                         height="80" 
                         allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" 
@@ -42,8 +42,9 @@ export const AboutSection = () => {
                         <iframe 
                         data-testid="embed-iframe"
                          style={{ borderRadius: 12 }} 
-                         src="https://open.spotify.com/embed/track/1dVebYDzVt5I7O5lpWdaxM?utm_source=generator" 
-                         width="100%" height="80" 
+                         src="https://open.spotify.com/embed/track/0T3pyPYtHAsxIRymAZsTkX?utm_source=generator" 
+                         width="100%" 
+                         height="80" 
                          allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" 
                          loading="lazy"
                          allowFullScreen
@@ -52,7 +53,7 @@ export const AboutSection = () => {
 
                         <iframe data-testid="embed-iframe" 
                          style={{ borderRadius: 12 }} 
-                         src="https://open.spotify.com/embed/track/6W2Ef5Ph6ILTUAedoQ3QIv?utm_source=generator" 
+                         src="https://open.spotify.com/embed/track/0AHJWgA2mLYz2iFVwbCeod?utm_source=generator" 
                          width="100%" 
                          height="80" 
                          allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" 
