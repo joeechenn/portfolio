@@ -42,7 +42,7 @@ export const AboutSection = () => {
                         <iframe 
                         data-testid="embed-iframe"
                          style={{ borderRadius: 12 }} 
-                         src="https://open.spotify.com/embed/track/0T3pyPYtHAsxIRymAZsTkX?utm_source=generator" 
+                         src="https://open.spotify.com/embed/track/4UBt00S6TNsKwgfxMcfNal?utm_source=generator" 
                          width="100%" 
                          height="80" 
                          allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" 
@@ -53,7 +53,7 @@ export const AboutSection = () => {
 
                         <iframe data-testid="embed-iframe" 
                          style={{ borderRadius: 12 }} 
-                         src="https://open.spotify.com/embed/track/0AHJWgA2mLYz2iFVwbCeod?utm_source=generator" 
+                         src="https://open.spotify.com/embed/track/3heQu7YLQFf0WY4Z2giXhk?utm_source=generator" 
                          width="100%" 
                          height="80" 
                          allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" 
