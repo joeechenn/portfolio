@@ -22,6 +22,11 @@ export const AboutSection = () => {
                     <p className="text-xs text-muted-foreground">
                         like the Androids in <em>Detroit: Become Human</em> (one of my favorite games)
                     </p>
+
+                    <p className="text-foreground">
+                    Right now I'm a research assistant at Northeastern's Visual Intelligence Lab, an incoming SDE intern at Amazon in Boston, and learning to make sushi from my dad.
+                    </p>
+
                     <p className="text-foreground">
                         I love playing games and watching gameplay like <em>Detroit: Become Human</em>, <em>Equilinox</em> and <em>Pokémon Black and Pokémon White</em>. 
                         I enjoy both listening and talking about music and clothes/fashion. Here are some songs I've been listening to:
@@ -30,7 +35,7 @@ export const AboutSection = () => {
                         <iframe 
                         data-testid="embed-iframe" 
                         style={{ borderRadius: 12 }}
-                        src="https://open.spotify.com/embed/track/5k8LB57xOq8UUNVaKWSqrf?utm_source=generator" 
+                        src="https://open.spotify.com/embed/track/50mzwHrUSmAlnOnNphNp1W?utm_source=generator" 
                         width="100%" 
                         height="80" 
                         allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" 
@@ -42,7 +47,7 @@ export const AboutSection = () => {
                         <iframe 
                         data-testid="embed-iframe"
                          style={{ borderRadius: 12 }} 
-                         src="https://open.spotify.com/embed/track/4UBt00S6TNsKwgfxMcfNal?utm_source=generator" 
+                         src="https://open.spotify.com/embed/track/0I4CicY6MftmDgdd76LXss?utm_source=generator" 
                          width="100%" 
                          height="80" 
                          allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" 
