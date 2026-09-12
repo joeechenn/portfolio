@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { Html } from '@react-three/drei'
 import { MathUtils, Plane, Raycaster, Shape, Vector2, Vector3 } from 'three'
-import { HomeScreen, ScrollDemo, SoftwareMenu } from './Screens'
+import { TopScreen, SoftwareMenu } from './Screens'
 
 const DISPLAY = { top: [5.65, 2.96], bottom: [4.88, 2.72] }
 const pixelsPerUnit = (size) => Math.min(size.width / 9.05, size.height / (size.width < 600 ? 10.45 : 8.6))
@@ -89,7 +89,7 @@ function Camera() {
   return null
 }
 
-function Lid({ controls, scrollDemo }) {
+function Lid({ controls }) {
   const { size } = useThree()
   const extra = size.width < 600 ? 1.2 : 0
   const lid = useRef(null)
@@ -105,10 +105,7 @@ function Lid({ controls, scrollDemo }) {
       <Panel width={8.15} height={3.72 + extra} radius={0.24} depth={0.045} position={[0, 2.05 + extra / 2, 0.065]} color="#202226" roughness={0.28} />
       <Panel width={5.92} height={3.2 + extra} radius={0.06} depth={0.018} position={[0, 1.97 + extra / 2, 0.12]} color="#07080a" />
       <HtmlSurface width={DISPLAY.top[0]} height={DISPLAY.top[1] + extra} position={[0, 1.97 + extra / 2, 0.175]} controls={controls} screen="top" active={controls.phase === 'open'}>
-        <div ref={controls.scrollRef} className="screen-scroll" data-screen-content tabIndex={0} aria-label="Top screen content">
-          <HomeScreen />
-          {scrollDemo && <ScrollDemo />}
-        </div>
+        <TopScreen controls={controls} />
       </HtmlSurface>
       <Panel width={7.98} height={3.58 + extra} radius={0.24} depth={0.02} position={[0, 2.05 + extra / 2, -0.17]} rotation={[Math.PI, 0, 0]} color="#111318" roughness={0.25} />
       {[-0.78, 0.78].map(x => (
@@ -247,7 +244,11 @@ function Base({ controls }) {
       {[['SELECT', -1.68], ['⌂ HOME', 0], ['START', 1.68]].map(([label, x]) => (
         <group key={label}>
           <Panel width={1.35} height={0.28} depth={0.012} radius={0.04} position={[x, -3.58 - extra, 0.18]} color="#1b1d21" />
-          <HardwareLabel active={controls.phase === 'open'} width={1.3} position={[x, -3.58 - extra, 0.23]}>{label}</HardwareLabel>
+          {x === 0 ? (
+            <HtmlSurface active={controls.phase === 'open'} width={1.35} height={0.28} position={[x, -3.58 - extra, 0.24]}>
+              <button type="button" className="home-button" aria-label="HOME: return to introduction" onClick={() => controls.activate('home')}>⌂ HOME</button>
+            </HtmlSurface>
+          ) : <HardwareLabel active={controls.phase === 'open'} width={1.3} position={[x, -3.58 - extra, 0.23]}>{label}</HardwareLabel>}
         </group>
       ))}
       <Panel width={0.24} height={0.24} depth={0.04} radius={0.05} position={[3.17, -3.17 - extra, 0.2]} color="#15171a" />
@@ -259,7 +260,7 @@ function Base({ controls }) {
   )
 }
 
-function Hardware({ controls, scrollDemo }) {
+function Hardware({ controls }) {
   const { size, invalidate } = useThree()
   const hardware = useRef(null)
   useEffect(() => {
@@ -275,7 +276,7 @@ function Hardware({ controls, scrollDemo }) {
   })
   return (
     <group ref={hardware} rotation={[(size.width < 600 ? -12 : -17) * Math.PI / 180, 0, 0]}>
-      <Lid controls={controls} scrollDemo={scrollDemo} />
+      <Lid controls={controls} />
       <Base controls={controls} />
       <mesh position={[0, 0.03, 0.01]} rotation={[0, 0, Math.PI / 2]}><cylinderGeometry args={[0.19, 0.19, 7.5, 40]} /><meshStandardMaterial color="#35383d" roughness={0.3} metalness={0.55} /></mesh>
       {[-3.88, 3.88].map((x) => <Panel key={x} width={0.58} height={0.39} depth={0.2} radius={0.1} position={[x, 0.02, -0.05]} color="#25282c" />)}
@@ -283,14 +284,14 @@ function Hardware({ controls, scrollDemo }) {
   )
 }
 
-export default function ConsoleScene({ controls, scrollDemo }) {
+export default function ConsoleScene({ controls }) {
   return (
     <Canvas orthographic camera={{ position: [0, 0, 20], zoom: 90, near: 0.1, far: 50 }} frameloop="demand" dpr={[1, 2]} gl={{ antialias: true, alpha: true }}>
       <Camera />
       <ambientLight intensity={1.4} />
       <directionalLight position={[-4, 7, 10]} intensity={3} />
       <directionalLight position={[5, -2, 5]} intensity={0.5} />
-      <Hardware controls={controls} scrollDemo={scrollDemo} />
+      <Hardware controls={controls} />
     </Canvas>
   )
 }

@@ -1,11 +1,16 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { animate, useMotionValue, useReducedMotion } from 'motion/react'
 import { clampPad, directionForKey, moveSelection, scrollVelocity } from './controlMath'
+import { software } from './software'
 
 export function useConsoleControls() {
   const [isOpen, setIsOpen] = useState(true)
   const [phase, setPhase] = useState('open')
   const [highlight, setHighlight] = useState(0)
+  const [activeSection, setActiveSection] = useState('home')
+  const [contentVersion, setContentVersion] = useState(0)
+  const [gallerySelection, setGallerySelection] = useState(0)
+  const focusContentRef = useRef(false)
   const [pressedDirection, setPressedDirection] = useState(null)
   const progress = useMotionValue(1)
   const padX = useMotionValue(0), padY = useMotionValue(0)
@@ -46,6 +51,16 @@ export function useConsoleControls() {
     setPressedDirection(null)
     endPad()
   }, [endPad])
+
+  const activate = useCallback((section) => {
+    if (!ready.current || (section !== 'home' && !software.some(item => item.id === section))) return
+    stopInput()
+    focusMenuRef.current = false
+    focusContentRef.current = true
+    setActiveSection(section)
+    setContentVersion(value => value + 1)
+    setHighlight(Math.max(0, software.findIndex(item => item.id === section)))
+  }, [stopInput])
 
   const select = useCallback((index) => {
     if (ready.current) setHighlight(index)
@@ -105,6 +120,9 @@ export function useConsoleControls() {
     setIsOpen(targetOpen.current)
     setPhase(targetOpen.current ? 'opening' : 'closing')
     if (targetOpen.current) {
+      setActiveSection('home')
+      setContentVersion(value => value + 1)
+      focusContentRef.current = false
       setHighlight(0)
       if (scrollRef.current) scrollRef.current.scrollTop = 0
     }
@@ -126,6 +144,11 @@ export function useConsoleControls() {
   useEffect(() => {
     const keydown = (event) => {
       if (!ready.current || event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey || event.isComposing) return
+      if (event.key === 'Enter' && (event.target === document.body || event.target instanceof HTMLCanvasElement)) {
+        event.preventDefault()
+        activate(software[highlight].id)
+        return
+      }
       const direction = directionForKey(event.key)
       if (!direction) return
       const target = event.target
@@ -157,7 +180,7 @@ export function useConsoleControls() {
       window.removeEventListener('blur', stopInput)
       document.removeEventListener('visibilitychange', visibility)
     }
-  }, [move, releaseDirection, stopInput])
+  }, [move, releaseDirection, stopInput, activate, highlight])
 
   useEffect(() => () => {
     cancelAnimationFrame(scrollFrame.current)
@@ -165,7 +188,7 @@ export function useConsoleControls() {
     animations.current.forEach(animation => animation.stop())
   }, [])
 
-  return { isOpen, phase, highlight, pressedDirection, progress, padX, padY, reducedMotion,
+  return { activeSection, contentVersion, activate, focusContentRef, gallerySelection, setGallerySelection, isOpen, phase, highlight, pressedDirection, progress, padX, padY, reducedMotion,
     scrollRef, focusMenuRef, select, move, releaseDirection, pulseDirection, track, leaveScreen,
     beginPad, movePad, endPad, toggle }
 }

@@ -1,14 +1,8 @@
-import { BriefcaseBusiness, Camera, FileText, Laptop, Mail, UserRound } from 'lucide-react'
-import { useEffect, useRef } from 'react'
+import { useEffect, useLayoutEffect, useRef } from 'react'
+import { motion as Motion } from 'motion/react'
+import { software } from './software'
+import { DraftSection } from './sections/DraftSection'
 
-const software = [
-  { id: 'about', label: 'About Me', Icon: UserRound, color: 'blue' },
-  { id: 'experience', label: 'Experience', Icon: BriefcaseBusiness, color: 'amber' },
-  { id: 'projects', label: 'Projects', Icon: Laptop, color: 'mint' },
-  { id: 'resume', label: 'Resume', Icon: FileText, color: 'violet' },
-  { id: 'contact', label: 'Contact', Icon: Mail, color: 'coral' },
-  { id: 'pictures', label: 'Pictures', Icon: Camera, color: 'slate' },
-]
 
 export function HomeScreen() {
   return (
@@ -44,9 +38,9 @@ export function SoftwareMenu({ controls }) {
           const { id, label, Icon, color } = item
           return (
           <button key={id} type="button" ref={node => { tiles.current[index] = node }} data-menu-item data-menu-index={index}
-            aria-label={label} aria-pressed={index === highlight} tabIndex={index === highlight ? 0 : -1}
-            onPointerEnter={() => controls?.select(index)} onFocus={() => controls?.select(index)} onClick={() => controls?.select(index)}
-            className={`software-tile ${index === highlight ? 'software-tile--selected' : ''}`}>
+            aria-label={label} aria-controls="portfolio-content" aria-current={controls?.activeSection === id ? 'page' : undefined} data-highlighted={index === highlight} tabIndex={index === highlight ? 0 : -1}
+            onPointerEnter={() => controls?.select(index)} onFocus={() => controls?.select(index)} onClick={() => controls?.activate(id)}
+            className={`software-tile ${index === highlight ? 'software-tile--selected' : ''} ${controls?.activeSection === id ? 'software-tile--active' : ''}`}>
             <div className={`software-art software-art--${color}`}><Icon strokeWidth={1.65} aria-hidden="true" /></div>
             <span className="software-label">{label}</span>
           </button>
@@ -57,14 +51,24 @@ export function SoftwareMenu({ controls }) {
   )
 }
 
-export function ScrollDemo() {
+export function TopScreen({ controls }) {
+  useLayoutEffect(() => {
+    const screen = controls.scrollRef.current
+    if (!screen) return
+    screen.scrollTop = 0
+    if (controls.focusContentRef.current) {
+      controls.focusContentRef.current = false
+      screen.focus({ preventScroll: true })
+    }
+  }, [controls.activeSection, controls.contentVersion, controls.scrollRef, controls.focusContentRef])
   return (
-    <section className="scroll-demo" aria-label="Hardware scroll test">
-      <h2>Circle Pad test</h2>
-      <p>Drag the Circle Pad down to scroll. Move it farther from the center to scroll faster.</p>
-      <div className="scroll-demo-card"><h3>Release to stop</h3><p>Let go anywhere, even outside the console. The pad returns to center and scrolling stops.</p></div>
-      <div className="scroll-demo-card"><h3>Move back up</h3><p>Drag upward to return to the introduction. A mouse wheel, trackpad, or swipe works here too.</p></div>
-      <div className="scroll-demo-card"><h3>End of the test</h3><p>This temporary content only appears in the development scroll demo. Portfolio sections arrive in the next checkpoints.</p></div>
-    </section>
+    <div ref={controls.scrollRef} id="portfolio-content" className="screen-scroll" data-screen-content
+      data-section={controls.activeSection} tabIndex={0} role="region"
+      aria-label={controls.activeSection === 'home' ? 'Introduction' : `${software.find(item => item.id === controls.activeSection)?.label} content`}>
+      <Motion.div key={`${controls.activeSection}-${controls.contentVersion}`} className="screen-page"
+        initial={controls.reducedMotion ? false : { opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.14 }}>
+        {controls.activeSection === 'home' ? <HomeScreen /> : <DraftSection section={controls.activeSection} controls={controls} />}
+      </Motion.div>
+    </div>
   )
 }

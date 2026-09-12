@@ -67,12 +67,6 @@ kbd { font: inherit; color: #626e7a; }
 .console-toggle { border: 0; padding: 8px 12px; background: transparent; color: #667583; font: inherit; font-size: 12px; cursor: pointer; border-radius: 6px; }
 .console-toggle:hover { color: #253f54; background: #dce2e766; }
 .console-toggle:focus-visible { outline: 2px solid #4282b1; outline-offset: 2px; }
-.scroll-demo-note { font-size: 11px; color: #687789; }
-.scroll-demo { padding: 22px; color: #465564; font-size: 16px; line-height: 1.6; }
-.scroll-demo h2 { font-size: 20px; margin: 0 0 12px; font-weight: 600; }
-.scroll-demo h3 { font-size: 16px; font-weight: 600; margin: 0 0 8px; }
-.scroll-demo p { margin: 0; }
-.scroll-demo-card { padding: 20px; margin-top: 20px; border: 1px solid #dce4eb; background: white; border-radius: 12px; }
 
 @media (prefers-reduced-motion: reduce) {
   .software-tile { transition: none; }
@@ -116,4 +110,51 @@ kbd { font: inherit; color: #626e7a; }
   .software-art { width: 28px; height: 22px; flex-shrink: 0; }
   .software-art svg { width: 18px; height: 18px; }
   .software-label { font-size: 11px; line-height: 12px; letter-spacing: -0.4px; white-space: nowrap; }
+}
+
+/* Checkpoint 3: functional section drafts. Final content styling follows in step 4. */
+.screen-page { height: 100%; }
+.software-tile--active { background: #edf7ff; }
+.software-tile--active .software-label { color: #285c83; text-decoration: underline; text-decoration-color: #82bce5; text-underline-offset: 3px; }
+.home-button { width: 100%; height: 100%; display: block; border: 0; padding: 0; background: transparent; color: #9a9fa6; font: inherit; font-size: 9px; cursor: pointer; border-radius: 3px; }
+.home-button:active { background: #ffffff18; }
+.home-button:focus-visible { outline: 2px solid #87cafa; outline-offset: 2px; }
+.flat-screens > .screen-scroll { height: 320px; border-radius: 14px; border: 1px solid #dce1e6; }
+.draft-section { padding: 16px 20px 24px; font-size: 15px; line-height: 1.5; color: #465564; }
+.section-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.section-header h1 { margin: 0; font-size: 24px; line-height: 1.2; font-weight: 600; color: #293b4b; }
+.section-header > span { color: #687b8b; font-size: 11px; }
+.section-summary { margin: 12px 0; }
+.draft-card { padding: 16px; margin-top: 16px; border: 1px solid #dce4eb; border-radius: 10px; background: white; }
+.draft-card h2 { margin: 0 0 8px; font-size: 17px; font-weight: 600; }
+.draft-card p { margin: 8px 0 0; }
+.draft-section--pictures { padding: 12px 14px; height: 100%; display: flex; flex-direction: column; }
+.picture-gallery { margin-top: 8px; flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.picture-gallery:focus-visible, .gallery-photo:focus-visible, .gallery-controls button:focus-visible { outline: 2px solid #4282b1; outline-offset: -2px; border-radius: 4px; }
+.gallery-viewport { flex: 1; min-height: 80px; overflow: hidden; touch-action: pan-y pinch-zoom; }
+.gallery-track { height: 100%; display: flex; touch-action: pan-y pinch-zoom; }
+.gallery-slide { flex: 0 0 60%; min-width: 0; padding: 0 4px; display: flex; align-items: center; justify-content: center; }
+.gallery-photo { width: 100%; height: 100%; border: 2px solid transparent; padding: 3px; border-radius: 6px; background: #f1f4f7; cursor: pointer; transform: scale(.7); transition: transform 160ms ease; }
+.gallery-photo--selected { transform: scale(1); border-color: #87cafa; }
+.gallery-photo img { display: block; width: 100%; height: 100%; object-fit: contain; user-select: none; }
+.gallery-controls { display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 6px; }
+.gallery-controls button { border: 1px solid #ccd9e3; border-radius: 6px; background: white; padding: 5px; cursor: pointer; color: #466e8d; }
+.gallery-controls button[aria-disabled="true"] { opacity: .35; cursor: default; }
+.gallery-controls svg { width: 20px; height: 20px; }
+.gallery-controls p { margin: 0; text-align: center; font-size: 12px; min-width: 100px; }
+.gallery-controls p span { display: block; font-size: 10px; color: #687b8b; }
+.gallery-hint { text-align: center; font-size: 11px; margin: 6px 0 0; color: #687b8b; }
+@media (max-width: 600px) {
+  .home-button { font-size: 6px; }
+  .draft-section { padding: 12px; font-size: 15px; }
+  .section-header h1 { font-size: 21px; }
+  .draft-card { padding: 12px; }
+  .gallery-controls { gap: 6px; }
+  .gallery-hint { display: none; }
+  .gallery-controls p { min-width: 90px; }
+}
+@media (prefers-reduced-motion: reduce) { .gallery-photo { transition: none; } }
+
+@media (max-width: 360px) {
+  .gallery-viewport { min-height: 60px; }
 }
