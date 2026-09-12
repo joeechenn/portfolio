@@ -1,4 +1,5 @@
 import { BriefcaseBusiness, Camera, FileText, Laptop, Mail, UserRound } from 'lucide-react'
+import { useEffect, useRef } from 'react'
 
 const software = [
   { id: 'about', label: 'About Me', Icon: UserRound, color: 'blue' },
@@ -26,21 +27,44 @@ export function HomeScreen() {
   )
 }
 
-export function SoftwareMenu() {
+export function SoftwareMenu({ controls }) {
+  const tiles = useRef([])
+  const highlight = controls?.highlight ?? 0
+  useEffect(() => {
+    if (controls?.focusMenuRef.current) {
+      controls.focusMenuRef.current = false
+      tiles.current[highlight]?.focus({ preventScroll: true })
+    }
+  }, [highlight, controls])
   return (
-    <section className="menu-screen" aria-label="Portfolio sections — visual draft">
+    <section className="menu-screen" aria-label="Portfolio menu">
       <div className="menu-topline" aria-hidden="true"><span>HOME MENU</span><span className="menu-grid-mark">▦</span></div>
       <div className="software-grid">
         {software.map((item, index) => {
           const { id, label, Icon, color } = item
           return (
-          <div key={id} className={`software-tile ${index === 0 ? 'software-tile--preview' : ''}`}>
+          <button key={id} type="button" ref={node => { tiles.current[index] = node }} data-menu-item data-menu-index={index}
+            aria-label={label} aria-pressed={index === highlight} tabIndex={index === highlight ? 0 : -1}
+            onPointerEnter={() => controls?.select(index)} onFocus={() => controls?.select(index)} onClick={() => controls?.select(index)}
+            className={`software-tile ${index === highlight ? 'software-tile--selected' : ''}`}>
             <div className={`software-art software-art--${color}`}><Icon strokeWidth={1.65} aria-hidden="true" /></div>
             <span className="software-label">{label}</span>
-          </div>
+          </button>
           )
         })}
       </div>
+    </section>
+  )
+}
+
+export function ScrollDemo() {
+  return (
+    <section className="scroll-demo" aria-label="Hardware scroll test">
+      <h2>Circle Pad test</h2>
+      <p>Drag the Circle Pad down to scroll. Move it farther from the center to scroll faster.</p>
+      <div className="scroll-demo-card"><h3>Release to stop</h3><p>Let go anywhere, even outside the console. The pad returns to center and scrolling stops.</p></div>
+      <div className="scroll-demo-card"><h3>Move back up</h3><p>Drag upward to return to the introduction. A mouse wheel, trackpad, or swipe works here too.</p></div>
+      <div className="scroll-demo-card"><h3>End of the test</h3><p>This temporary content only appears in the development scroll demo. Portfolio sections arrive in the next checkpoints.</p></div>
     </section>
   )
 }
