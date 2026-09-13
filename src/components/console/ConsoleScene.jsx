@@ -302,7 +302,26 @@ function Hardware({ controls }) {
     invalidate()
     return () => subscriptions.forEach(unsubscribe => unsubscribe())
   }, [progress, padX, padY, fall, squash, tilt, invalidate])
-  useEffect(() => { invalidate() }, [controls.pressedDirection, controls.phase, controls.intro, invalidate])
+  useEffect(() => { invalidate() }, [controls.pressedDirection, controls.phase, invalidate])
+
+  // The intro leaves squash and tilt on this group, and useFrame is the only thing
+  // that clears them. A single dropped repaint would strand the console mid-bounce —
+  // scaled wide and short, which shoves the button letters up and to the right of
+  // their buttons — so ask for several frames as the intro settles instead of betting
+  // on one. Mobile browsers throttle rAF while scrolling, hence the timer backstop.
+  useEffect(() => {
+    if (controls.intro !== 'done') return
+    let remaining = 6
+    let frame = requestAnimationFrame(function burst() {
+      invalidate()
+      if (--remaining > 0) frame = requestAnimationFrame(burst)
+    })
+    const backstop = setTimeout(invalidate, 400)
+    return () => {
+      cancelAnimationFrame(frame)
+      clearTimeout(backstop)
+    }
+  }, [controls.intro, invalidate])
   useFrame(() => {
     const progress = controls.progress.get()
     const mobile = size.width < 600
