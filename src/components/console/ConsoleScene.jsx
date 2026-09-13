@@ -80,12 +80,45 @@ function HardwareLabel({ children, width = 0.7, height = 0.18, ...props }) {
 }
 
 function Camera() {
-  const { camera, size, invalidate } = useThree()
+  const { camera, size, invalidate, gl } = useThree()
   useLayoutEffect(() => {
     camera.zoom = pixelsPerUnit(size)
     camera.updateProjectionMatrix()
     invalidate()
   }, [camera, size, invalidate])
+
+  // frameloop="demand" means a frame drawn against a stale viewport stays on screen
+  // until something asks for another one, while the HTML overlays (screens, button
+  // letters) reflow immediately — so the two layers visibly drift apart. Mobile
+  // browsers resize late and often: toolbars slide away, fonts land, the device
+  // rotates, the tab comes back from the background. Re-measure the live canvas and
+  // ask for a repaint on each of those.
+  useEffect(() => {
+    const canvas = gl.domElement
+    const sync = () => {
+      const width = canvas.clientWidth
+      const height = canvas.clientHeight
+      if (!width || !height) return
+      const zoom = pixelsPerUnit({ width, height })
+      if (camera.zoom !== zoom) {
+        camera.zoom = zoom
+        camera.updateProjectionMatrix()
+      }
+      invalidate()
+    }
+    const observer = new ResizeObserver(sync)
+    observer.observe(canvas)
+    window.addEventListener('orientationchange', sync)
+    window.addEventListener('pageshow', sync)
+    document.addEventListener('visibilitychange', sync)
+    document.fonts?.ready.then(sync).catch(() => {})
+    return () => {
+      observer.disconnect()
+      window.removeEventListener('orientationchange', sync)
+      window.removeEventListener('pageshow', sync)
+      document.removeEventListener('visibilitychange', sync)
+    }
+  }, [camera, gl, invalidate])
   return null
 }
 
@@ -269,7 +302,7 @@ function Hardware({ controls }) {
     invalidate()
     return () => subscriptions.forEach(unsubscribe => unsubscribe())
   }, [progress, padX, padY, fall, squash, tilt, invalidate])
-  useEffect(() => { invalidate() }, [controls.pressedDirection, controls.phase, invalidate])
+  useEffect(() => { invalidate() }, [controls.pressedDirection, controls.phase, controls.intro, invalidate])
   useFrame(() => {
     const progress = controls.progress.get()
     const mobile = size.width < 600
