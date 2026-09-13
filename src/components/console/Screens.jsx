@@ -12,7 +12,6 @@ import { Contact } from './sections/Contact'
 export function HomeScreen() {
   return (
     <section className="home-screen" aria-label="Introduction">
-      <header className="screen-topline" aria-hidden="true"><span>JOE CHEN</span></header>
       <div className="introduction">
         <h1>Hi, I’m Joe<span className="hello-period">.</span></h1>
         <div className="introduction-rule" aria-hidden="true" />
