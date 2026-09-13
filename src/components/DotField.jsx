@@ -28,7 +28,7 @@ function hash(column, row, salt) {
   return value - Math.floor(value)
 }
 
-export function DotField({ onImpact, originRef, reducedMotion }) {
+export function DotField({ onImpact, reducedMotion }) {
   const canvasRef = useRef(null)
 
   useEffect(() => {
@@ -145,12 +145,12 @@ export function DotField({ onImpact, originRef, reducedMotion }) {
       draw(performance.now())
     }
 
+    // The console lands dead centre of the page, so that is where the wave starts.
     const splash = (strength) => {
       if (reducedMotion) return
-      const rect = originRef.current?.getBoundingClientRect()
       waves.push({
-        x: rect ? rect.left + rect.width / 2 : width / 2,
-        y: rect ? rect.top + rect.height / 2 : height * 0.7,
+        x: width / 2,
+        y: height / 2,
         time: (performance.now() - start) / 1000,
         strength,
       })
@@ -171,7 +171,7 @@ export function DotField({ onImpact, originRef, reducedMotion }) {
       window.removeEventListener('resize', resize)
       document.removeEventListener('visibilitychange', visibility)
     }
-  }, [onImpact, originRef, reducedMotion])
+  }, [onImpact, reducedMotion])
 
   return <canvas ref={canvasRef} className="dot-field" aria-hidden="true" />
 }

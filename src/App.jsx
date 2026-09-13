@@ -1,4 +1,4 @@
-import { Component, Suspense, lazy, useRef } from 'react'
+import { Component, Suspense, lazy } from 'react'
 import { motion as Motion } from 'motion/react'
 import { TopScreen, SoftwareMenu } from './components/console/Screens'
 import { useConsoleControls } from './components/console/useConsoleControls'
@@ -23,13 +23,12 @@ class ConsoleBoundary extends Component {
 
 export default function App() {
   const controls = useConsoleControls()
-  const shadow = useRef(null)
   return (
     <main className="portfolio">
-      <DotField onImpact={controls.onImpact} originRef={shadow} reducedMotion={controls.reducedMotion} />
+      <DotField onImpact={controls.onImpact} reducedMotion={controls.reducedMotion} />
       <Motion.div className="console-stage" style={{ '--open-progress': controls.progress, '--landing': controls.landing }}
         data-console-phase={controls.phase} data-console-intro={controls.intro} aria-label="Joe’s Nintendo 3DS inspired portfolio">
-        <div ref={shadow} className="console-shadow" aria-hidden="true" />
+        <div className="console-shadow" aria-hidden="true" />
         <ConsoleBoundary controls={controls}>
           <Suspense fallback={<FlatScreens controls={controls} />}>
             <ConsoleScene controls={controls} />
