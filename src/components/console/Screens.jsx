@@ -1,22 +1,28 @@
 import { useEffect, useLayoutEffect, useRef } from 'react'
 import { motion as Motion } from 'motion/react'
 import { software } from './software'
-import { DraftSection } from './sections/DraftSection'
+import { PicturesSection } from './sections/Pictures'
+import { AboutMe } from './sections/AboutMe'
+import { Experience } from './sections/Experience'
+import { Projects } from './sections/Projects'
+import { Resume } from './sections/Resume'
+import { Contact } from './sections/Contact'
 
 
 export function HomeScreen() {
   return (
     <section className="home-screen" aria-label="Introduction">
-      <div className="screen-topline" aria-hidden="true"><span>JOE CHEN</span></div>
+      <header className="screen-topline" aria-hidden="true"><span>JOE CHEN</span></header>
       <div className="introduction">
         <h1>Hi, I’m Joe<span className="hello-period">.</span></h1>
+        <div className="introduction-rule" aria-hidden="true" />
         <p className="introduction-subtitle">CS student @<br className="mobile-break" /> Northeastern University</p>
       </div>
-      <div className="screen-instructions">
+      <footer className="screen-instructions">
         <p>Choose an icon below to explore.</p>
         <p className="keyboard-hint">Click, or use <kbd>WASD</kbd> / <kbd>↑ ↓ ← →</kbd> + <kbd>Enter</kbd></p>
         <p className="touch-hint">Tap an icon below to explore.</p>
-      </div>
+      </footer>
     </section>
   )
 }
@@ -67,7 +73,13 @@ export function TopScreen({ controls }) {
       aria-label={controls.activeSection === 'home' ? 'Introduction' : `${software.find(item => item.id === controls.activeSection)?.label} content`}>
       <Motion.div key={`${controls.activeSection}-${controls.contentVersion}`} className="screen-page"
         initial={controls.reducedMotion ? false : { opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.14 }}>
-        {controls.activeSection === 'home' ? <HomeScreen /> : <DraftSection section={controls.activeSection} controls={controls} />}
+        {controls.activeSection === 'home' ? <HomeScreen />
+          : controls.activeSection === 'about' ? <AboutMe controls={controls} />
+            : controls.activeSection === 'experience' ? <Experience />
+              : controls.activeSection === 'projects' ? <Projects />
+                : controls.activeSection === 'resume' ? <Resume />
+                  : controls.activeSection === 'contact' ? <Contact />
+                    : <PicturesSection controls={controls} />}
       </Motion.div>
     </div>
   )

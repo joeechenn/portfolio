@@ -1,24 +1,55 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { animate, useMotionValue, useReducedMotion } from 'motion/react'
+import { animate, useMotionValue, useReducedMotion, useTransform } from 'motion/react'
 import { clampPad, directionForKey, moveSelection, scrollVelocity } from './controlMath'
 import { software } from './software'
 
+// The drop is expressed as a fraction of the console's travel rather than in world
+// units, because the scene is orthographic and its visible height varies with the
+// viewport: 1 is just clear of the top edge, 0 is resting on the ground. The scene
+// converts this to world units. The ground shadow tracks the whole descent, so there
+// is a landing spot on the stage before the console arrives.
+const DROP_HEIGHT = 1
+const DROP_DURATION = 0.95
+// Beat between the hinge coming to rest and the screens lighting up, so the console
+// looks like it settles before it wakes.
+const SCREEN_WAKE = 100
+// Fractions of DROP_DURATION at which the console meets the ground, and how hard.
+const CONTACTS = [[0.5, 1], [0.86, 0.42]]
+// Roughly quadratic ease-in, so the descent reads as gravity rather than a UI slide.
+const GRAVITY = [0.55, 0, 1, 0.45]
+
+function introState() {
+  if (typeof window === 'undefined') return 'done'
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'done' : 'waiting'
+}
+
 export function useConsoleControls() {
-  const [isOpen, setIsOpen] = useState(true)
-  const [phase, setPhase] = useState('open')
+  // 'waiting' holds the stage empty until the 3D scene reports it can paint, 'dropping'
+  // runs the fall, 'done' is the normal interactive console.
+  const [intro, setIntro] = useState(introState)
+  const introActive = intro !== 'done'
+  const [isOpen, setIsOpen] = useState(!introActive)
+  const [phase, setPhase] = useState(introActive ? 'closed' : 'open')
   const [highlight, setHighlight] = useState(0)
   const [activeSection, setActiveSection] = useState('home')
   const [contentVersion, setContentVersion] = useState(0)
   const [gallerySelection, setGallerySelection] = useState(0)
   const focusContentRef = useRef(false)
   const [pressedDirection, setPressedDirection] = useState(null)
-  const progress = useMotionValue(1)
+  const progress = useMotionValue(introActive ? 0 : 1)
+  const fall = useMotionValue(introActive ? DROP_HEIGHT : 0)
+  const squash = useMotionValue(0)
+  const tilt = useMotionValue(introActive ? 1 : 0)
+  const landing = useTransform(fall, value => Math.min(Math.max(1 - value, 0), 1))
   const padX = useMotionValue(0), padY = useMotionValue(0)
   const reducedMotion = useReducedMotion()
   const scrollRef = useRef(null)
   const focusMenuRef = useRef(false)
-  const targetOpen = useRef(true)
-  const ready = useRef(true)
+  const targetOpen = useRef(!introActive)
+  const ready = useRef(!introActive)
+  const introAnimations = useRef([])
+  const introTimers = useRef([])
+  const impactListeners = useRef(new Set())
   const dragging = useRef(false)
   const dragPoint = useRef({ x: 0, y: 0 })
   const scrollFrame = useRef(0)
@@ -128,17 +159,122 @@ export function useConsoleControls() {
     }
   }, [stopInput])
 
+  // Hand control back to the normal open/close machinery.
+  const settle = useCallback(() => {
+    targetOpen.current = true
+    setIsOpen(true)
+    setIntro('done')
+  }, [])
+
+  // Lets the background field react to the console hitting the ground without
+  // re-rendering the app on every contact.
+  const onImpact = useCallback((listener) => {
+    impactListeners.current.add(listener)
+    return () => impactListeners.current.delete(listener)
+  }, [])
+
+  // Cut the intro short and drop straight to the resting pose: either the visitor
+  // gave input, or there is no canvas to drop onto.
+  const skipIntro = useCallback(() => {
+    introAnimations.current.forEach(animation => animation.stop())
+    introAnimations.current = []
+    introTimers.current.forEach(clearTimeout)
+    introTimers.current = []
+    fall.set(0)
+    squash.set(0)
+    tilt.set(0)
+    settle()
+  }, [fall, squash, tilt, settle])
+
+  // Called once the 3D scene has painted, so the drop never plays behind the fallback.
+  const sceneReady = useCallback(() => {
+    setIntro(current => (current === 'waiting' ? 'dropping' : current))
+  }, [])
+
+  useEffect(() => {
+    if (intro !== 'waiting') return
+    // The scene signals readiness from a rAF callback, which a hidden tab never runs.
+    // Only run the grace period while the page is actually on screen, so a portfolio
+    // opened in a background tab still drops when the visitor switches to it.
+    let timer = 0
+    const arm = () => {
+      clearTimeout(timer)
+      if (!document.hidden) timer = setTimeout(skipIntro, 1800)
+    }
+    arm()
+    document.addEventListener('visibilitychange', arm)
+    return () => {
+      clearTimeout(timer)
+      document.removeEventListener('visibilitychange', arm)
+    }
+  }, [intro, skipIntro])
+
+  useEffect(() => {
+    if (intro !== 'dropping') return
+    introAnimations.current = [
+      animate(fall, [DROP_HEIGHT, 0, 0.085, 0, 0.021, 0], {
+        duration: DROP_DURATION,
+        times: [0, 0.5, 0.72, 0.86, 0.94, 1],
+        ease: [GRAVITY, 'easeOut', GRAVITY, 'easeOut', GRAVITY],
+        onComplete: settle,
+      }),
+      // Squash spikes on each contact and recovers, giving the shell some mass.
+      animate(squash, [0, 0, 1, 0, 0, 0.42, 0], {
+        duration: DROP_DURATION,
+        times: [0, 0.48, 0.515, 0.62, 0.84, 0.872, 0.94],
+        ease: ['linear', 'easeOut', 'easeOut', 'linear', 'easeOut', 'easeOut'],
+      }),
+      animate(tilt, [1, 0.1, -0.05, 0.02, 0], {
+        duration: DROP_DURATION,
+        times: [0, 0.5, 0.72, 0.88, 1],
+        ease: 'easeOut',
+      }),
+    ]
+    introTimers.current = CONTACTS.map(([at, strength]) => setTimeout(
+      () => impactListeners.current.forEach(listener => listener(strength)),
+      at * DROP_DURATION * 1000,
+    ))
+    const animations = introAnimations.current
+    const timers = introTimers.current
+    return () => {
+      animations.forEach(animation => animation.stop())
+      timers.forEach(clearTimeout)
+    }
+  }, [intro, fall, squash, tilt, settle])
+
+  useEffect(() => {
+    if (intro === 'done') return
+    const skip = () => skipIntro()
+    window.addEventListener('pointerdown', skip)
+    window.addEventListener('keydown', skip)
+    window.addEventListener('wheel', skip, { passive: true })
+    return () => {
+      window.removeEventListener('pointerdown', skip)
+      window.removeEventListener('keydown', skip)
+      window.removeEventListener('wheel', skip)
+    }
+  }, [intro, skipIntro])
+
   useEffect(() => {
     const destination = isOpen ? 1 : 0
+    let wakeTimer = 0
     const animation = animate(progress, destination, {
       duration: reducedMotion ? 0 : 0.7 * Math.abs(destination - progress.get()),
       ease: [0.4, 0, 0.2, 1],
       onComplete: () => {
-        ready.current = isOpen
-        setPhase(isOpen ? 'open' : 'closed')
+        const wake = () => {
+          ready.current = isOpen
+          setPhase(isOpen ? 'open' : 'closed')
+        }
+        // Only opening gets the pause; closing must blank the screens at once.
+        if (isOpen && !reducedMotion) wakeTimer = setTimeout(wake, SCREEN_WAKE)
+        else wake()
       },
     })
-    return () => animation.stop()
+    return () => {
+      animation.stop()
+      clearTimeout(wakeTimer)
+    }
   }, [isOpen, progress, reducedMotion])
 
   useEffect(() => {
@@ -190,5 +326,5 @@ export function useConsoleControls() {
 
   return { activeSection, contentVersion, activate, focusContentRef, gallerySelection, setGallerySelection, isOpen, phase, highlight, pressedDirection, progress, padX, padY, reducedMotion,
     scrollRef, focusMenuRef, select, move, releaseDirection, pulseDirection, track, leaveScreen,
-    beginPad, movePad, endPad, toggle }
+    beginPad, movePad, endPad, toggle, intro, fall, squash, tilt, landing, sceneReady, skipIntro, onImpact }
 }

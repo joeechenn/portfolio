@@ -1,13 +1,17 @@
 import { useEffect, useRef } from 'react'
 import useEmblaCarousel from 'embla-carousel-react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { photos } from '../../../data/photos'
+import { SectionHeading } from './SectionHeading'
 
-const photos = [
-  { file: 'landscape.svg', caption: 'Landscape placeholder' },
-  { file: 'portrait.svg', caption: 'Portrait placeholder' },
-  { file: 'square.svg', caption: 'Square placeholder' },
-  { file: 'wide.svg', caption: 'Wide placeholder' },
-]
+export function PicturesSection({ controls }) {
+  return (
+    <section className="section-layout pictures-section" aria-labelledby="section-heading">
+      <SectionHeading>Pictures</SectionHeading>
+      <Pictures controls={controls} />
+    </section>
+  )
+}
 
 export function Pictures({ controls }) {
   const { gallerySelection: selected, setGallerySelection, reducedMotion } = controls
@@ -36,25 +40,33 @@ export function Pictures({ controls }) {
           select(selected + (event.key === 'ArrowLeft' ? -1 : 1))
         }
       }}>
-      <div className="gallery-viewport" ref={viewportRef}>
-        <div className="gallery-track">
-          {photos.map((photo, index) => (
-            <div className="gallery-slide" key={photo.file} role="group" aria-roledescription="slide" aria-label={`${index + 1} of ${photos.length}`}>
-              <button className={`gallery-photo ${selected === index ? 'gallery-photo--selected' : ''}`}
-                type="button" tabIndex={selected === index ? 0 : -1} aria-label={`View ${photo.caption.toLowerCase()}`}
-                aria-pressed={selected === index} onClick={() => select(index)}>
-                <img src={`${import.meta.env.BASE_URL}draft-gallery/${photo.file}`} alt={photo.caption} draggable={false} />
-              </button>
-            </div>
-          ))}
+      <div className="gallery-stage">
+        <div className="gallery-viewport" ref={viewportRef}>
+          <div className="gallery-track">
+            {photos.map((photo, index) => (
+              <div className="gallery-slide" style={{ '--photo-ratio': photo.width / photo.height }}
+                key={photo.file} role="group" aria-roledescription="slide" aria-label={`${index + 1} of ${photos.length}`}>
+                <button className={`gallery-photo ${selected === index ? 'gallery-photo--selected' : ''}`}
+                  style={{ '--preview-shift': index < selected ? '30%' : '-30%' }}
+                  type="button" tabIndex={selected === index ? 0 : -1} aria-label={`View ${photo.caption.toLowerCase()}`}
+                  aria-pressed={selected === index} onClick={() => select(index)}>
+                  <img src={`${import.meta.env.BASE_URL}gallery/${photo.file}`} alt={photo.caption}
+                    width={photo.width} height={photo.height}
+                    loading={Math.abs(selected - index) <= 1 ? 'eager' : 'lazy'} decoding="async" draggable={false} />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="gallery-controls">
+          <button type="button" aria-label="Previous picture" aria-disabled={selected === 0} onClick={() => select(selected - 1)}><ChevronLeft aria-hidden="true" /></button>
+          <button type="button" aria-label="Next picture" aria-disabled={selected === photos.length - 1} onClick={() => select(selected + 1)}><ChevronRight aria-hidden="true" /></button>
         </div>
       </div>
-      <div className="gallery-controls">
-        <button type="button" aria-label="Previous picture" aria-disabled={selected === 0} onClick={() => select(selected - 1)}><ChevronLeft aria-hidden="true" /></button>
-        <p role="status" aria-live="polite" aria-atomic="true">{selected + 1} / {photos.length}<span>{photos[selected].caption}</span></p>
-        <button type="button" aria-label="Next picture" aria-disabled={selected === photos.length - 1} onClick={() => select(selected + 1)}><ChevronRight aria-hidden="true" /></button>
-      </div>
-      <p className="gallery-hint">Click a neighbor, use the arrows, or swipe.</p>
+      <p className="gallery-caption" role="status" aria-live="polite" aria-atomic="true">
+        <span className="gallery-count" aria-hidden="true">{selected + 1} / {photos.length} · </span>
+        <span className="sr-only">Picture {selected + 1} of {photos.length}: </span>{photos[selected].caption}
+      </p>
     </div>
   )
 }

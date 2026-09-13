@@ -263,16 +263,28 @@ function Base({ controls }) {
 function Hardware({ controls }) {
   const { size, invalidate } = useThree()
   const hardware = useRef(null)
+  const { progress, padX, padY, fall, squash, tilt } = controls
   useEffect(() => {
-    const subscriptions = [controls.progress, controls.padX, controls.padY].map(value => value.on('change', invalidate))
+    const subscriptions = [progress, padX, padY, fall, squash, tilt].map(value => value.on('change', invalidate))
     invalidate()
     return () => subscriptions.forEach(unsubscribe => unsubscribe())
-  }, [controls.progress, controls.padX, controls.padY, invalidate])
+  }, [progress, padX, padY, fall, squash, tilt, invalidate])
   useEffect(() => { invalidate() }, [controls.pressedDirection, controls.phase, invalidate])
   useFrame(() => {
     const progress = controls.progress.get()
-    hardware.current.rotation.x = MathUtils.degToRad(size.width < 600 ? -12 : -17) * progress
-    hardware.current.position.y = (2.05 + (size.width < 600 ? 0.325 : 0)) * (1 - progress)
+    const mobile = size.width < 600
+    const squash = controls.squash.get()
+    const scaleY = 1 - squash * 0.07
+    // Scaling happens around the hinge at the origin, so shift the group back down by
+    // however far the compression would otherwise lift its feet off the ground.
+    const feet = -4.1 - (mobile ? 0.65 : 0)
+    hardware.current.rotation.x = MathUtils.degToRad(mobile ? -12 : -17) * progress
+    hardware.current.rotation.z = MathUtils.degToRad(7) * controls.tilt.get()
+    hardware.current.scale.set(1 + squash * 0.045, scaleY, 1)
+    // Convert the normalised drop into however far the console has to travel to clear
+    // the top of this particular viewport.
+    const reach = size.height / pixelsPerUnit(size) / 2 + 4.6
+    hardware.current.position.y = (2.05 + (mobile ? 0.325 : 0)) * (1 - progress) + controls.fall.get() * reach + feet * (1 - scaleY)
   })
   return (
     <group ref={hardware} rotation={[(size.width < 600 ? -12 : -17) * Math.PI / 180, 0, 0]}>
@@ -284,10 +296,23 @@ function Hardware({ controls }) {
   )
 }
 
+// The drop must not start until this canvas has actually painted a frame, or it would
+// play out of sight behind the Suspense fallback.
+function SceneReady({ onReady }) {
+  const { invalidate } = useThree()
+  useEffect(() => {
+    invalidate()
+    const frame = requestAnimationFrame(onReady)
+    return () => cancelAnimationFrame(frame)
+  }, [onReady, invalidate])
+  return null
+}
+
 export default function ConsoleScene({ controls }) {
   return (
     <Canvas orthographic camera={{ position: [0, 0, 20], zoom: 90, near: 0.1, far: 50 }} frameloop="demand" dpr={[1, 2]} gl={{ antialias: true, alpha: true }}>
       <Camera />
+      <SceneReady onReady={controls.sceneReady} />
       <ambientLight intensity={1.4} />
       <directionalLight position={[-4, 7, 10]} intensity={3} />
       <directionalLight position={[5, -2, 5]} intensity={0.5} />
