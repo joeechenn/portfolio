@@ -3,9 +3,11 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { Html } from '@react-three/drei'
 import { MathUtils, Plane, Raycaster, Shape, Vector2, Vector3 } from 'three'
 import { TopScreen, SoftwareMenu } from './Screens'
+import { createSurfaceProjector } from './surfaceProjection'
 
 const DISPLAY = { top: [5.65, 2.96], bottom: [4.88, 2.72] }
 const pixelsPerUnit = (size) => Math.min(size.width / 9.05, size.height / (size.width < 600 ? 10.45 : 8.6))
+const canvasOrigin = () => [0, 0]
 
 function roundedShape(width, height, radius) {
   const x = -width / 2, y = -height / 2
@@ -39,8 +41,17 @@ function Disc({ radius, depth = 0.04, color = '#101113', ...props }) {
 function HtmlSurface({ width, height, children, active = true, controls, screen, planeHandlers, pointerEvents, ...props }) {
   const { size, invalidate, camera, gl } = useThree()
   const surface = useRef(null)
+  const element = useRef(null)
+  const projectSurface = useMemo(createSurfaceProjector, [])
   const ray = useMemo(() => new Raycaster(), [])
   const scale = pixelsPerUnit(size)
+  useFrame(() => {
+    if (!surface.current || !element.current) return
+    camera.updateMatrixWorld()
+    surface.current.updateWorldMatrix(true, false)
+    const matrix = projectSurface(surface.current.matrixWorld, camera, size, width, height, scale)
+    element.current.style.transform = `matrix(${matrix.join(',')})`
+  })
   const pointOnScreen = (event) => {
     const rect = gl.domElement.getBoundingClientRect()
     ray.setFromCamera(new Vector2((event.clientX - rect.left) / rect.width * 2 - 1, -(event.clientY - rect.top) / rect.height * 2 + 1), camera)
@@ -54,9 +65,9 @@ function HtmlSurface({ width, height, children, active = true, controls, screen,
   }
   return (
     <group ref={surface} {...props}>
-      <Html transform distanceFactor={400 / scale} pointerEvents={pointerEvents ?? (active ? 'auto' : 'none')}>
-        <div ref={() => invalidate()} className="html-surface" data-screen={screen} inert={!active} aria-hidden={!active || undefined}
-          style={{ width: width * scale, height: height * scale, visibility: active ? 'visible' : 'hidden' }}
+      <Html calculatePosition={canvasOrigin} style={{ pointerEvents: pointerEvents ?? (active ? 'auto' : 'none') }}>
+        <div ref={node => { element.current = node; if (node) invalidate() }} className="html-surface" data-screen={screen} inert={!active} aria-hidden={!active || undefined}
+          style={{ position: 'absolute', top: 0, left: 0, transformOrigin: '0 0', width: width * scale, height: height * scale, visibility: active ? 'visible' : 'hidden' }}
           onClick={event => event.stopPropagation()}
           onPointerDown={event => { event.stopPropagation(); planeHandlers?.down?.(event, pointOnScreen(event)) }}
           onPointerMove={event => {
@@ -91,19 +102,13 @@ function Camera() {
   // until something asks for another one, while the HTML overlays (screens, button
   // letters) reflow immediately — so the two layers visibly drift apart. Mobile
   // browsers resize late and often: toolbars slide away, fonts land, the device
-  // rotates, the tab comes back from the background. Re-measure the live canvas and
-  // ask for a repaint on each of those.
+  // rotates, the tab comes back from the background. R3F handles remeasurement;
+  // ask for a repaint on each of those without introducing another zoom source.
   useEffect(() => {
     const canvas = gl.domElement
     const sync = () => {
-      const width = canvas.clientWidth
-      const height = canvas.clientHeight
-      if (!width || !height) return
-      const zoom = pixelsPerUnit({ width, height })
-      if (camera.zoom !== zoom) {
-        camera.zoom = zoom
-        camera.updateProjectionMatrix()
-      }
+      // R3F's size is the shared source for camera zoom and HTML dimensions.
+      // A second measurement must never update only the camera's scale.
       invalidate()
     }
     const observer = new ResizeObserver(sync)
@@ -118,7 +123,7 @@ function Camera() {
       window.removeEventListener('pageshow', sync)
       document.removeEventListener('visibilitychange', sync)
     }
-  }, [camera, gl, invalidate])
+  }, [gl, invalidate])
   return null
 }
 
@@ -131,7 +136,7 @@ function Lid({ controls }) {
     lid.current.rotation.x = MathUtils.degToRad(180 - 155 * progress)
     lid.current.position.z = 0.68 * (1 - progress)
     lid.current.scale.y = MathUtils.lerp((4 + (size.width < 600 ? 0.65 : 0)) / (4 + extra), 1, progress)
-  })
+  }, -1)
   return (
     <group name="lid" ref={lid} rotation={[25 * Math.PI / 180, 0, 0]} onClick={event => { event.stopPropagation(); controls.toggle() }}>
       <Panel width={8.28} height={3.88 + extra} radius={0.3} depth={0.18} position={[0, 2.05 + extra / 2, -0.13]} color="#080a0d" />
@@ -304,24 +309,8 @@ function Hardware({ controls }) {
   }, [progress, padX, padY, fall, squash, tilt, invalidate])
   useEffect(() => { invalidate() }, [controls.pressedDirection, controls.phase, invalidate])
 
-  // The intro leaves squash and tilt on this group, and useFrame is the only thing
-  // that clears them. A single dropped repaint would strand the console mid-bounce —
-  // scaled wide and short, which shoves the button letters up and to the right of
-  // their buttons — so ask for several frames as the intro settles instead of betting
-  // on one. Mobile browsers throttle rAF while scrolling, hence the timer backstop.
-  useEffect(() => {
-    if (controls.intro !== 'done') return
-    let remaining = 6
-    let frame = requestAnimationFrame(function burst() {
-      invalidate()
-      if (--remaining > 0) frame = requestAnimationFrame(burst)
-    })
-    const backstop = setTimeout(invalidate, 400)
-    return () => {
-      cancelAnimationFrame(frame)
-      clearTimeout(backstop)
-    }
-  }, [controls.intro, invalidate])
+  // Apply the parent pose before the lid (-1) and HTML projections (0), so
+  // WebGL and HTML use the same pose even on the last on-demand frame.
   useFrame(() => {
     const progress = controls.progress.get()
     const mobile = size.width < 600
@@ -337,7 +326,7 @@ function Hardware({ controls }) {
     // the top of this particular viewport.
     const reach = size.height / pixelsPerUnit(size) / 2 + 4.6
     hardware.current.position.y = (2.05 + (mobile ? 0.325 : 0)) * (1 - progress) + controls.fall.get() * reach + feet * (1 - scaleY)
-  })
+  }, -2)
   return (
     <group ref={hardware} rotation={[(size.width < 600 ? -12 : -17) * Math.PI / 180, 0, 0]}>
       <Lid controls={controls} />
