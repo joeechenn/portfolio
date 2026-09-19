@@ -1,12 +1,13 @@
-import { useEffect, useLayoutEffect, useMemo, useRef } from 'react'
+import { createContext, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { Html } from '@react-three/drei'
 import { MathUtils, Plane, Raycaster, Shape, Vector2, Vector3 } from 'three'
 import { TopScreen, SoftwareMenu } from './Screens'
 import { createSurfaceProjector } from './surfaceProjection'
+import { consolePixelsPerUnit as pixelsPerUnit, consoleCameraFrame, dropDisplacement } from './sceneLayout'
 
 const DISPLAY = { top: [5.65, 2.96], bottom: [4.88, 2.72] }
-const pixelsPerUnit = (size) => Math.min(size.width / 9.05, size.height / (size.width < 600 ? 10.45 : 8.6))
+const LayoutContext = createContext(null)
 const canvasOrigin = () => [0, 0]
 
 function roundedShape(width, height, radius) {
@@ -40,11 +41,12 @@ function Disc({ radius, depth = 0.04, color = '#101113', ...props }) {
 
 function HtmlSurface({ width, height, children, active = true, controls, screen, planeHandlers, pointerEvents, ...props }) {
   const { size, invalidate, camera, gl } = useThree()
+  const { stage } = useContext(LayoutContext)
   const surface = useRef(null)
   const element = useRef(null)
   const projectSurface = useMemo(createSurfaceProjector, [])
   const ray = useMemo(() => new Raycaster(), [])
-  const scale = pixelsPerUnit(size)
+  const scale = pixelsPerUnit(stage)
   useFrame(() => {
     if (!surface.current || !element.current) return
     camera.updateMatrixWorld()
@@ -92,11 +94,15 @@ function HardwareLabel({ children, width = 0.7, height = 0.18, ...props }) {
 
 function Camera() {
   const { camera, size, invalidate, gl } = useThree()
+  const { stage, origin } = useContext(LayoutContext)
   useLayoutEffect(() => {
-    camera.zoom = pixelsPerUnit(size)
+    const frame = consoleCameraFrame(stage, size, origin)
+    camera.zoom = frame.zoom
+    camera.position.set(frame.x, frame.y, 20)
     camera.updateProjectionMatrix()
+    camera.updateMatrixWorld()
     invalidate()
-  }, [camera, size, invalidate])
+  }, [camera, size, stage, origin, invalidate])
 
   // frameloop="demand" means a frame drawn against a stale viewport stays on screen
   // until something asks for another one, while the HTML overlays (screens, button
@@ -107,7 +113,7 @@ function Camera() {
   useEffect(() => {
     const canvas = gl.domElement
     const sync = () => {
-      // R3F's size is the shared source for camera zoom and HTML dimensions.
+      // The measured stage is the shared source for zoom and HTML dimensions.
       // A second measurement must never update only the camera's scale.
       invalidate()
     }
@@ -128,7 +134,7 @@ function Camera() {
 }
 
 function Lid({ controls }) {
-  const { size } = useThree()
+  const { stage: size } = useContext(LayoutContext)
   const extra = size.width < 600 ? 1.2 : 0
   const lid = useRef(null)
   useFrame(() => {
@@ -225,7 +231,7 @@ function DpadControl({ controls, x, scale }) {
 }
 
 function Base({ controls }) {
-  const { size } = useThree()
+  const { stage: size } = useContext(LayoutContext)
   const mobile = size.width < 600
   const extra = mobile ? 0.65 : 0
   const wider = mobile ? 0.5 : 0
@@ -299,7 +305,8 @@ function Base({ controls }) {
 }
 
 function Hardware({ controls }) {
-  const { size, invalidate } = useThree()
+  const { invalidate } = useThree()
+  const { stage: size, origin } = useContext(LayoutContext)
   const hardware = useRef(null)
   const { progress, padX, padY, fall, squash, tilt } = controls
   useEffect(() => {
@@ -322,10 +329,7 @@ function Hardware({ controls }) {
     hardware.current.rotation.x = MathUtils.degToRad(mobile ? -12 : -17) * progress
     hardware.current.rotation.z = MathUtils.degToRad(7) * controls.tilt.get()
     hardware.current.scale.set(1 + squash * 0.045, scaleY, 1)
-    // Convert the normalised drop into however far the console has to travel to clear
-    // the top of this particular viewport.
-    const reach = size.height / pixelsPerUnit(size) / 2 + 4.6
-    hardware.current.position.y = (2.05 + (mobile ? 0.325 : 0)) * (1 - progress) + controls.fall.get() * reach + feet * (1 - scaleY)
+    hardware.current.position.y = (2.05 + (mobile ? 0.325 : 0)) * (1 - progress) + dropDisplacement(controls.fall.get(), size, origin) + feet * (1 - scaleY)
   }, -2)
   return (
     <group ref={hardware} rotation={[(size.width < 600 ? -12 : -17) * Math.PI / 180, 0, 0]}>
@@ -350,14 +354,43 @@ function SceneReady({ onReady }) {
 }
 
 export default function ConsoleScene({ controls }) {
+  const area = useRef(null)
+  const [layout, setLayout] = useState(null)
+  useLayoutEffect(() => {
+    const stage = area.current.parentElement
+    const page = stage.closest('.portfolio')
+    const measure = () => {
+      const s = stage.getBoundingClientRect()
+      const p = page.getBoundingClientRect()
+      const next = {
+        stage: { width: s.width, height: s.height },
+        canvas: { width: p.width, height: p.height },
+        origin: { x: s.left - p.left, y: s.top - p.top },
+      }
+      setLayout(previous => JSON.stringify(previous) === JSON.stringify(next) ? previous : next)
+    }
+    measure()
+    const observer = new ResizeObserver(measure)
+    observer.observe(stage)
+    observer.observe(page)
+    window.addEventListener('resize', measure)
+    return () => { observer.disconnect(); window.removeEventListener('resize', measure) }
+  }, [])
   return (
-    <Canvas orthographic camera={{ position: [0, 0, 20], zoom: 90, near: 0.1, far: 50 }} frameloop="demand" dpr={[1, 2]} gl={{ antialias: true, alpha: true }}>
-      <Camera />
-      <SceneReady onReady={controls.sceneReady} />
-      <ambientLight intensity={1.4} />
-      <directionalLight position={[-4, 7, 10]} intensity={3} />
-      <directionalLight position={[5, -2, 5]} intensity={0.5} />
-      <Hardware controls={controls} />
-    </Canvas>
+    <div ref={area} className="console-render-area" style={layout ? {
+      left: -layout.origin.x, top: -layout.origin.y,
+      width: layout.canvas.width, height: layout.canvas.height,
+    } : undefined}>
+      {layout && <LayoutContext.Provider value={layout}>
+        <Canvas orthographic camera={{ position: [0, 0, 20], zoom: 90, near: 0.1, far: 50 }} frameloop="demand" dpr={[1, 2]} gl={{ antialias: true, alpha: true }}>
+          <Camera />
+          <SceneReady onReady={controls.sceneReady} />
+          <ambientLight intensity={1.4} />
+          <directionalLight position={[-4, 7, 10]} intensity={3} />
+          <directionalLight position={[5, -2, 5]} intensity={0.5} />
+          <Hardware controls={controls} />
+        </Canvas>
+      </LayoutContext.Provider>}
+    </div>
   )
 }

@@ -21,6 +21,7 @@
 body { margin: 0; min-width: 320px; }
 .portfolio { min-height: 100svh; display: grid; grid-template-columns: minmax(0, 1fr); place-items: center; padding: 24px; }
 .console-stage { width: min(100%, 1040px); min-width: 0; height: min(920px, calc(100svh - 48px)); min-height: 680px; position: relative; isolation: isolate; z-index: 1; }
+.console-render-area { position: absolute; }
 /* A real element rather than a pseudo-element, so the background field can measure
    where the console actually meets the ground and start its ripple there. */
 .console-shadow { position: absolute; left: 13%; right: 13%; bottom: 1.4%; height: 8%; border-radius: 50%; background: #2b3242; z-index: -1; pointer-events: none; }

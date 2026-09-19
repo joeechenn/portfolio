@@ -3,6 +3,44 @@ import assert from 'node:assert/strict'
 import { clampPad, directionForKey, moveSelection, scrollVelocity } from './controlMath.js'
 import { Euler, Matrix4, OrthographicCamera, Quaternion, Vector3 } from 'three'
 import { createSurfaceProjector } from './surfaceProjection.js'
+import { consoleCameraFrame, consolePixelsPerUnit, dropDisplacement, FIRST_BOUNCE_HEIGHT } from './sceneLayout.js'
+
+test('expanding the canvas preserves the stage projection at desktop and mobile sizes', () => {
+  for (const [width, height, sw, sh, sx, sy] of [
+    [2560, 1440, 1040, 920, 760, 260],
+    [3840, 2160, 1040, 920, 1400, 620],
+    [1440, 900, 1040, 852, 200, 24],
+    [393, 740, 393, 716, 0, 12],
+    [740, 728, 692, 680, 24, 24],
+  ]) {
+    const stage = { width: sw, height: sh }
+    const frame = consoleCameraFrame(stage, { width, height }, { x: sx, y: sy })
+    const oldZoom = Math.min(sw / 9.05, sh / (sw < 600 ? 10.45 : 8.6))
+    assert.equal(frame.zoom, oldZoom)
+    for (const [x, y] of [[0, 0], [-4.2, 4.6], [4.2, -4.8], [3.58, -0.66]]) {
+      const oldX = sx + sw / 2 + x * oldZoom
+      const oldY = sy + sh / 2 - y * oldZoom
+      assert.ok(Math.abs(width / 2 + (x - frame.x) * frame.zoom - oldX) < 1e-9)
+      assert.ok(Math.abs(height / 2 - (y - frame.y) * frame.zoom - oldY) < 1e-9)
+    }
+  }
+})
+
+test('the initial drop clears the full page while rebound distances stay unchanged', () => {
+  for (const [width, height, top] of [[1040, 920, 260], [1040, 920, 620], [1040, 852, 24], [393, 716, 12]]) {
+    const stage = { width, height }
+    const zoom = consolePixelsPerUnit(stage)
+    const oldReach = height / zoom / 2 + 4.6
+    for (const fall of [0, 0.021, 0.04, FIRST_BOUNCE_HEIGHT]) {
+      assert.equal(dropDisplacement(fall, stage, { y: top }), fall * oldReach)
+    }
+    assert.ok(Math.abs(dropDisplacement(1, stage, { y: top }) - oldReach - top / zoom) < 1e-9)
+    // Conservative bounds of the closed shell, including its initial 7-degree tilt.
+    const bottom = -4.9 * Math.cos(7 * Math.PI / 180) - 4.25 * Math.sin(7 * Math.PI / 180)
+    const initialBottom = 2.05 + dropDisplacement(1, stage, { y: top }) + bottom
+    assert.ok(top + height / 2 - initialBottom * zoom < 0)
+  }
+})
 
 test('HTML corners and label centers match the 3D projection after resize, tilt, and squash', () => {
   const project = createSurfaceProjector()

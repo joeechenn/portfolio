@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { animate, useMotionValue, useReducedMotion, useTransform } from 'motion/react'
 import { clampPad, directionForKey, moveSelection, scrollVelocity } from './controlMath'
 import { software } from './software'
+import { FIRST_BOUNCE_HEIGHT } from './sceneLayout'
 
 // The drop is expressed as a fraction of the console's travel rather than in world
 // units, because the scene is orthographic and its visible height varies with the
@@ -212,7 +213,7 @@ export function useConsoleControls() {
   useEffect(() => {
     if (intro !== 'dropping') return
     introAnimations.current = [
-      animate(fall, [DROP_HEIGHT, 0, 0.085, 0, 0.021, 0], {
+      animate(fall, [DROP_HEIGHT, 0, FIRST_BOUNCE_HEIGHT, 0, 0.021, 0], {
         duration: DROP_DURATION,
         times: [0, 0.5, 0.72, 0.86, 0.94, 1],
         ease: [GRAVITY, 'easeOut', GRAVITY, 'easeOut', GRAVITY],
