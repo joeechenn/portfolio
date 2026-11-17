@@ -15,4 +15,11 @@ export const projects = [
     image: 'projects/localassistant.png',
     github: 'https://github.com/joeechenn/local-assistant',
   },
+  {
+    id: 'pokemon-battle-simulator',
+    title: 'Pokémon Battle Simulator',
+    description: 'A top-down, interactive Pokémon battle simulator where you play as the trainer. Just don’t expect your Pokémon to wait for orders: they fight on their own!',
+    image: 'projects/pokemonbattlecover.jpg',
+    github: 'https://github.com/joeechenn/pokemon-battle-app',
+  },
 ]
